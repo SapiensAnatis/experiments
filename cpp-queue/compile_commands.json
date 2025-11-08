@@ -1,0 +1,12 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-c",
+      "-std=c++20",
+      "queue.cpp"
+    ],
+    "directory": "/workspaces/cpp-queue",
+    "file": "/workspaces/cpp-queue/queue.cpp"
+  }
+]
