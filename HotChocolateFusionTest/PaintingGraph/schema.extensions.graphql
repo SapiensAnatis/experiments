@@ -1,0 +1,4 @@
+﻿extend type Query {
+  paintingById(id: ID! @is(field: "id")): Painting!
+  paintingsById(ids: [ID!]! @is(field: "id")): [Painting!]!
+}

@@ -1,0 +1,15 @@
+﻿schema {
+  query: Query
+}
+
+type Painting {
+  id: ID!
+  title: String!
+  artist: String!
+  year: Int!
+}
+
+type Query {
+  paintingById(id: ID!): Painting!
+  paintingsById(ids: [ID!]!): [Painting!]!
+}

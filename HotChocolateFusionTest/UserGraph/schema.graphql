@@ -1,0 +1,17 @@
+﻿schema {
+  query: Query
+}
+
+type Painting {
+  id: ID!
+}
+
+type Query {
+  users: [User!]!
+}
+
+type User {
+  id: ID!
+  name: String!
+  paintings: [Painting!]!
+}
