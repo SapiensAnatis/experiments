@@ -5,6 +5,7 @@
 #ifndef SERVICECONTAINER_H
 #define SERVICECONTAINER_H
 
+#include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -33,7 +34,7 @@ std::string GetTypeNameGcc() {
     int status;
     const char *typeName = typeid(Type).name();
 
-    auto realName = abi::__cxa_demangle(typeName, nullptr, nullptr, &status);
+    char *realName = abi::__cxa_demangle(typeName, nullptr, nullptr, &status);
 
     if (status != 0) {
         assert(false && "failed to demangle name");
@@ -83,11 +84,11 @@ private:
 };
 
 using ServiceInstanceMap = std::unordered_map<std::type_index, AbstractPointerContainer *>;
-using ServiceUniquePtrList = std::list<std::unique_ptr<AbstractPointerContainer>>;
+using ServiceUniquePtrVector = std::vector<std::unique_ptr<AbstractPointerContainer>>;
 
 class ServiceProvider {
 public:
-    ServiceProvider(ServiceUniquePtrList &&serviceOwningPointers, ServiceInstanceMap &&serviceInstanceMap) :
+    ServiceProvider(ServiceUniquePtrVector &&serviceOwningPointers, ServiceInstanceMap &&serviceInstanceMap) :
         m_serviceOwningPointers(std::move(serviceOwningPointers)), m_services(std::move(serviceInstanceMap)) {}
 
     template<typename Service>
@@ -101,21 +102,12 @@ public:
 
 
 private:
-    template<typename Service, class Dependant>
-    Service *GetServiceInternal() {
-        const auto it = m_services.find(std::type_index{typeid(Service)});
-        if (it == m_services.end()) {
-            throw std::runtime_error(std::string(typeid(Service).name()) + ": unsatisfied dependency of " +
-                                     std::string(typeid(Dependant).name()));
-        }
-        return static_cast<Service *>(it->second->Get());
-    }
-
     /*
      * The pointers should be owned by a list since the order they inhabit the map in is not well-defined, which
      * can introduce destruction order issues.
      */
-    ServiceUniquePtrList m_serviceOwningPointers;
+
+    ServiceUniquePtrVector m_serviceOwningPointers;
     ServiceInstanceMap m_services;
 };
 
@@ -182,7 +174,7 @@ public:
                 assert(dependantNodeIt != m_nodes.end());
 
                 GraphNode &dependantNode = dependantNodeIt->second;
-                const std::size_t erased = dependantNode.dependencies.erase(node.typeIndex);
+                [[maybe_unused]] const std::size_t erased = dependantNode.dependencies.erase(node.typeIndex);
                 assert(erased != 0);
 
                 if (dependantNode.dependencies.empty()) {
@@ -201,24 +193,25 @@ public:
             }
         }
 
-        ServiceUniquePtrList ptrList;
+        ServiceUniquePtrVector ptrVec;
         ServiceInstanceMap instanceMap;
 
         for (const GraphNode &node: sortedNodes) {
             std::unique_ptr<AbstractPointerContainer> container = node.creationFunction(instanceMap);
             instanceMap.insert(std::make_pair(node.typeIndex, container.get()));
 
-            /*
-             * When we topologically sort the service graph, we get a list of services in the order they should be
-             * constructed. Ideally services should then be destroyed in the reverse of this order, so that they can
-             * access all of their dependencies in their destructors.
-             *
-             * Adding to the front of the list for each element of the sorted node list achieves this ordering.
-             */
-            ptrList.push_front(std::move(container));
+            ptrVec.push_back(std::move(container));
         }
 
-        return ServiceProvider{std::move(ptrList), std::move(instanceMap)};
+
+        /*
+         * When we topologically sort the service graph, we get a list of services in the order they should be
+         * constructed. Ideally services should then be destroyed in the reverse of this order, so that they can
+         * access all of their dependencies in their destructors.
+         */
+        std::ranges::reverse(ptrVec);
+
+        return ServiceProvider{std::move(ptrVec), std::move(instanceMap)};
     }
 
 private:
