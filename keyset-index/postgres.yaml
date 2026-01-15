@@ -1,0 +1,38 @@
+# Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
+# Created with podman-5.7.1
+
+# NOTE: The namespace sharing for a pod has been modified by the user and is not the same as the
+# default settings for kubernetes. This can lead to unexpected behavior when running the generated
+# kube yaml in a kubernetes cluster.
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+  labels:
+    app: keyset-index
+  name: keyset-index
+spec:
+  securityContext:
+    runAsUser: 999
+    runAsGroup: 999
+  containers:
+    - name: postgres
+      image: custom-postgres
+      env:
+        - name: POSTGRES_PASSWORD
+          value: password
+      command: ["postgres"]
+      args: ["-c", "config_file=/etc/postgresql/postgresql.conf"]
+      volumeMounts:
+        - name: postgres-data-pvc
+          mountPath: /var/lib/postgresql
+      ports:
+        - containerPort: 5432
+          hostPort: 5432
+  volumes:
+    - name: postgres-data-pvc
+      persistentVolumeClaim:
+        claimName: postgres-data
