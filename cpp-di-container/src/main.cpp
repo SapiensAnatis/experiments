@@ -21,7 +21,7 @@ int main() {
 
     auto prov = collection.BuildServiceProvider();
 
-    auto *server = prov.GetService<Server>();
+    const auto *server = prov.GetService<Server>();
     server->DoThing();
 
     std::cout << "Destroying service provider...\n";
