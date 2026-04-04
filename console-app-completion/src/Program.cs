@@ -20,4 +20,4 @@ CommandHelpDefinition[] defs = CommandInfoLoader.GetHelpDefinitions(targetAssemb
 
 string script = CompletionScriptBuilder.BuildCompletionScript(baseProgramName, defs);
 
-await File.WriteAllTextAsync("testing/generated_completion.sh", script);
+Console.WriteLine(script);
