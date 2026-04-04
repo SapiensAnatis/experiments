@@ -1,6 +1,3 @@
 namespace ConsoleAppCompletion;
 
-public class CommandInfoLoaderException(string message) : Exception(message)
-{
-
-}
+public class CommandInfoLoaderException(string message) : Exception(message) {}

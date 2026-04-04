@@ -19,7 +19,6 @@ public static class CommandInfoLoader
 
         var assembly = loadContext.LoadFromAssemblyPath(assemblyPath);
 
-        // Static class
         var type = assembly.GetType("ConsoleAppFramework.ConsoleApp+ConsoleAppBuilder");
 
         if (type is null)
